@@ -33,6 +33,7 @@ interface Profesional {
   telefono?: string
   email?: string
   imagen_url?: string
+  foto_url?: string
   activo: boolean
   orden: number
   created_at: string
@@ -47,6 +48,7 @@ interface ProfesionalCreate {
   telefono?: string
   email?: string
   imagen_url?: string
+  foto_url?: string
   activo?: boolean
   orden?: number
 }
@@ -59,6 +61,7 @@ interface ProfesionalUpdate {
   telefono?: string
   email?: string
   imagen_url?: string
+  foto_url?: string
   activo?: boolean
   orden?: number
 }

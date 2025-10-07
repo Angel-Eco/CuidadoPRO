@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { profesionalesAPI } from '@/services/api'
+import ImageUpload from '../ImageUpload'
 import { 
   Plus, 
   Edit, 
@@ -28,7 +29,7 @@ interface Profesional {
   descripcion: string
   telefono?: string
   email?: string
-  imagen_url?: string
+  foto_url?: string
   activo: boolean
   orden: number
   created_at: string
@@ -42,7 +43,7 @@ interface ProfesionalCreate {
   descripcion: string
   telefono?: string
   email?: string
-  imagen_url?: string
+  foto_url?: string
   activo?: boolean
   orden?: number
 }
@@ -74,6 +75,7 @@ export default function ProfesionalesTable() {
   const [updating, setUpdating] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [profesionalToDelete, setProfesionalToDelete] = useState<Profesional | null>(null)
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string>('')
   
   const { token, isLoading } = useAuth()
 
@@ -155,12 +157,13 @@ export default function ProfesionalesTable() {
     const newProfesional = {
       nombre: formData.get('nombre') as string,
       especialidad: formData.get('especialidad') as string,
-      telefono: formData.get('telefono') as string,
-      email: formData.get('email') as string,
+      telefono: (formData.get('telefono') as string) || undefined,
+      email: (formData.get('email') as string) || undefined,
       descripcion: formData.get('descripcion') as string || `Profesional especializado en ${formData.get('especialidad') as string}`,
       experiencia: parseInt(formData.get('experiencia') as string) || 0,
       orden: parseInt(formData.get('orden') as string) || 1,
-      activo: formData.get('activo') === 'on'
+      activo: formData.get('activo') === 'on',
+      foto_url: selectedImageUrl || undefined
     }
 
     try {
@@ -172,6 +175,7 @@ export default function ProfesionalesTable() {
       
       // Cerrar el modal
       setShowCreateModal(false)
+      setSelectedImageUrl('')
       
       // Limpiar el formulario
       e.currentTarget.reset()
@@ -379,10 +383,10 @@ export default function ProfesionalesTable() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
-                            {profesional.imagen_url ? (
+                            {profesional.foto_url ? (
                               <img
                                 className="h-10 w-10 rounded-full object-cover"
-                                src={profesional.imagen_url}
+                                src={profesional.foto_url}
                                 alt={profesional.nombre}
                               />
                             ) : (
@@ -562,7 +566,10 @@ export default function ProfesionalesTable() {
                   Nuevo Profesional
                 </h3>
                 <button
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={() => {
+                    setShowCreateModal(false)
+                    setSelectedImageUrl('')
+                  }}
                   className="text-gray-400 hover:text-gray-600"
                 >
                   <X className="h-6 w-6" />
@@ -664,6 +671,18 @@ export default function ProfesionalesTable() {
                 </div>
 
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Foto del Profesional
+                  </label>
+                  <ImageUpload
+                    onImageUpload={setSelectedImageUrl}
+                    onImageRemove={() => setSelectedImageUrl('')}
+                    currentImageUrl={selectedImageUrl}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
                   <label htmlFor="orden" className="block text-sm font-medium text-gray-700">
                     Orden de Visualización
                   </label>
@@ -693,7 +712,10 @@ export default function ProfesionalesTable() {
                 <div className="flex justify-end space-x-3 pt-4">
                   <button
                     type="button"
-                    onClick={() => setShowCreateModal(false)}
+                    onClick={() => {
+                      setShowCreateModal(false)
+                      setSelectedImageUrl('')
+                    }}
                     className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-green"
                   >
                     Cancelar
@@ -737,10 +759,10 @@ export default function ProfesionalesTable() {
                 <div className="bg-gray-50 rounded-lg p-3 mb-4 text-left">
                   <div className="flex items-center space-x-3">
                     <div className="flex-shrink-0 h-10 w-10">
-                      {profesionalToDelete.imagen_url ? (
+                      {profesionalToDelete.foto_url ? (
                         <img
                           className="h-10 w-10 rounded-full object-cover"
-                          src={profesionalToDelete.imagen_url}
+                          src={profesionalToDelete.foto_url}
                           alt={profesionalToDelete.nombre}
                         />
                       ) : (

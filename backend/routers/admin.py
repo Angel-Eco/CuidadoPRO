@@ -6,8 +6,39 @@ from models.solicitud import SolicitudResponse, SolicitudUpdate, SolicitudStats
 from models.profesional import ProfesionalResponse, ProfesionalListResponse, ProfesionalCreate, ProfesionalUpdate
 from auth.middleware import get_manager_or_admin_user
 from supabase import Client
+import re
 
 router = APIRouter()
+
+def extract_filename_from_url(url: str) -> Optional[str]:
+    """
+    Extrae el nombre del archivo de una URL de Supabase Storage
+    
+    Args:
+        url: URL completa del archivo en Supabase Storage
+        
+    Returns:
+        Nombre del archivo o None si no se puede extraer
+    """
+    if not url or "supabase.co/storage" not in url:
+        return None
+    
+    try:
+        # Patrón para extraer el nombre del archivo de la URL
+        # https://project.supabase.co/storage/v1/object/public/profesionales-fotos/filename.jpg
+        pattern = r'/profesionales-fotos/([^/?]+)'
+        match = re.search(pattern, url)
+        
+        if match:
+            filename = match.group(1)
+            # Limpiar parámetros de query si existen
+            filename = filename.split("?")[0]
+            return filename
+        
+        return None
+    except Exception as e:
+        print(f"Error extrayendo filename de URL: {e}")
+        return None
 
 @router.get("/solicitudes", response_model=List[SolicitudResponse])
 async def get_all_solicitudes(
@@ -473,18 +504,36 @@ async def create_profesional(
 ):
     """Create a new profesional."""
     try:
-        result = supabase.table("profesionales").insert(profesional.model_dump()).execute()
+        print(f"📝 Creando profesional con datos: {profesional.model_dump()}")
+        
+        # Validar datos antes de insertar
+        data_to_insert = profesional.model_dump()
+        print(f"📊 Datos a insertar: {data_to_insert}")
+        
+        # Verificar que no haya campos None que puedan causar problemas
+        cleaned_data = {k: v for k, v in data_to_insert.items() if v is not None}
+        print(f"🧹 Datos limpiados: {cleaned_data}")
+        
+        result = supabase.table("profesionales").insert(cleaned_data).execute()
+        
+        print(f"📤 Resultado de inserción: {result}")
         
         if result.data:
             return ProfesionalResponse(**result.data[0])
         else:
+            print(f"❌ No se devolvieron datos en la inserción")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="No se pudo crear el profesional"
             )
-    except HTTPException:
+    except HTTPException as he:
+        print(f"❌ HTTPException: {he.detail}")
         raise
     except Exception as e:
+        print(f"❌ Error al crear profesional: {str(e)}")
+        print(f"❌ Tipo de error: {type(e)}")
+        import traceback
+        print(f"❌ Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al crear profesional: {str(e)}"
@@ -531,11 +580,53 @@ async def delete_profesional(
     current_user: dict = Depends(get_manager_or_admin_user),
     supabase: Client = Depends(get_supabase_client)
 ):
-    """Delete a profesional."""
+    """Delete a profesional and their photo from storage."""
     try:
+        print(f"🗑️ Eliminando profesional: {profesional_id}")
+        
+        # Primero obtener los datos del profesional para acceder a la foto
+        profesional_data = supabase.table("profesionales").select("foto_url, nombre").eq("id", profesional_id).execute()
+        
+        if not profesional_data.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Profesional no encontrado"
+            )
+        
+        profesional = profesional_data.data[0]
+        foto_url = profesional.get("foto_url")
+        nombre = profesional.get("nombre", "profesional")
+        
+        print(f"📸 Foto URL del profesional: {foto_url}")
+        
+        # Eliminar la foto del storage si existe
+        if foto_url:
+            filename = extract_filename_from_url(foto_url)
+            
+            if filename:
+                try:
+                    print(f"📁 Eliminando archivo del storage: {filename}")
+                    
+                    # Eliminar archivo del storage
+                    storage_result = supabase.storage.from_("profesionales-fotos").remove([filename])
+                    
+                    if storage_result.get("error"):
+                        print(f"⚠️ Error al eliminar archivo del storage: {storage_result['error']}")
+                        # No fallar la eliminación del profesional si falla la eliminación del archivo
+                    else:
+                        print(f"✅ Archivo eliminado del storage: {filename}")
+                        
+                except Exception as e:
+                    print(f"⚠️ Error al eliminar archivo del storage: {str(e)}")
+                    # No fallar la eliminación del profesional si falla la eliminación del archivo
+            else:
+                print(f"⚠️ No se pudo extraer el nombre del archivo de la URL: {foto_url}")
+        
+        # Eliminar el profesional de la base de datos
         result = supabase.table("profesionales").delete().eq("id", profesional_id).execute()
         
         if result.data:
+            print(f"✅ Profesional eliminado: {nombre}")
             return {"success": True, "message": "Profesional eliminado exitosamente"}
         else:
             raise HTTPException(
@@ -545,10 +636,62 @@ async def delete_profesional(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"❌ Error al eliminar profesional: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al eliminar profesional: {str(e)}"
         )
+
+@router.post("/test-delete-profesional/{profesional_id}")
+async def test_delete_profesional(
+    profesional_id: str,
+    current_user: dict = Depends(get_manager_or_admin_user),
+    supabase: Client = Depends(get_supabase_client)
+):
+    """Test endpoint para verificar la funcionalidad de eliminación sin eliminar realmente."""
+    try:
+        print(f"🧪 Test de eliminación para profesional: {profesional_id}")
+        
+        # Obtener datos del profesional
+        profesional_data = supabase.table("profesionales").select("foto_url, nombre").eq("id", profesional_id).execute()
+        
+        if not profesional_data.data:
+            return {"error": "Profesional no encontrado"}
+        
+        profesional = profesional_data.data[0]
+        foto_url = profesional.get("foto_url")
+        nombre = profesional.get("nombre", "profesional")
+        
+        result = {
+            "profesional_id": profesional_id,
+            "nombre": nombre,
+            "foto_url": foto_url,
+            "filename_extracted": None,
+            "storage_operation": None
+        }
+        
+        # Probar extracción de filename
+        if foto_url:
+            filename = extract_filename_from_url(foto_url)
+            result["filename_extracted"] = filename
+            
+            if filename:
+                # Probar operación de storage (sin eliminar realmente)
+                try:
+                    # Solo verificar que el archivo existe
+                    files = supabase.storage.from_("profesionales-fotos").list()
+                    file_exists = any(f.get("name") == filename for f in files)
+                    result["storage_operation"] = {
+                        "file_exists": file_exists,
+                        "total_files_in_bucket": len(files)
+                    }
+                except Exception as e:
+                    result["storage_operation"] = {"error": str(e)}
+        
+        return result
+        
+    except Exception as e:
+        return {"error": str(e)}
 
 @router.get("/profesionales/{profesional_id}", response_model=ProfesionalResponse)
 async def get_profesional_by_id(
@@ -599,4 +742,82 @@ async def test_profesionales_table(
             "table_exists": False,
             "error": str(e),
             "message": "Error al acceder a la tabla profesionales. Verifica que la tabla existe en Supabase."
+        }
+
+@router.post("/test-profesional-validation")
+async def test_profesional_validation(
+    profesional_data: dict
+):
+    """Test endpoint to validate profesional data without inserting."""
+    try:
+        print(f"🧪 Probando validación con datos: {profesional_data}")
+        
+        # Intentar crear el modelo
+        profesional = ProfesionalCreate(**profesional_data)
+        
+        print(f"✅ Validación exitosa: {profesional.model_dump()}")
+        
+        return {
+            "success": True,
+            "message": "Datos válidos",
+            "validated_data": profesional.model_dump()
+        }
+        
+    except Exception as e:
+        print(f"❌ Error de validación: {str(e)}")
+        return {
+            "success": False,
+            "message": f"Error de validación: {str(e)}",
+            "error_type": str(type(e).__name__)
+        }
+
+@router.post("/test-profesional-insert")
+async def test_profesional_insert(
+    profesional_data: dict,
+    supabase: Client = Depends(get_supabase_client)
+):
+    """Test endpoint to insert profesional data and see what happens."""
+    try:
+        print(f"🧪 Probando inserción con datos: {profesional_data}")
+        
+        # Intentar crear el modelo
+        profesional = ProfesionalCreate(**profesional_data)
+        data_to_insert = profesional.model_dump()
+        
+        print(f"📊 Datos a insertar: {data_to_insert}")
+        
+        # Limpiar datos None
+        cleaned_data = {k: v for k, v in data_to_insert.items() if v is not None}
+        print(f"🧹 Datos limpiados: {cleaned_data}")
+        
+        # Intentar insertar
+        result = supabase.table("profesionales").insert(cleaned_data).execute()
+        
+        print(f"📤 Resultado de inserción: {result}")
+        
+        if result.data:
+            # Eliminar el registro de prueba
+            supabase.table("profesionales").delete().eq("id", result.data[0]["id"]).execute()
+            print(f"🗑️ Registro de prueba eliminado")
+            
+            return {
+                "success": True,
+                "message": "Inserción exitosa",
+                "inserted_data": result.data[0]
+            }
+        else:
+            return {
+                "success": False,
+                "message": "No se devolvieron datos en la inserción",
+                "result": str(result)
+            }
+        
+    except Exception as e:
+        print(f"❌ Error en inserción de prueba: {str(e)}")
+        import traceback
+        print(f"❌ Traceback: {traceback.format_exc()}")
+        return {
+            "success": False,
+            "message": f"Error en inserción: {str(e)}",
+            "error_type": str(type(e).__name__)
         }

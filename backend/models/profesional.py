@@ -25,7 +25,7 @@ class ProfesionalBase(BaseModel):
         return v
 
 class ProfesionalCreate(ProfesionalBase):
-    imagen_url: Optional[str] = Field(None, description="URL de la imagen del profesional")
+    foto_url: Optional[str] = Field(None, description="URL de la foto del profesional")
 
 class ProfesionalUpdate(BaseModel):
     nombre: Optional[str] = Field(None, min_length=2, max_length=100)
@@ -36,7 +36,7 @@ class ProfesionalUpdate(BaseModel):
     email: Optional[str] = Field(None, max_length=100)
     activo: Optional[bool] = None
     orden: Optional[int] = Field(None, ge=0)
-    imagen_url: Optional[str] = None
+    foto_url: Optional[str] = None
 
     @validator('email')
     def validate_email(cls, v):
@@ -52,7 +52,7 @@ class ProfesionalUpdate(BaseModel):
 
 class ProfesionalResponse(ProfesionalBase):
     id: str
-    imagen_url: Optional[str] = None
+    foto_url: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
 

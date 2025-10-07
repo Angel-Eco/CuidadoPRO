@@ -13,6 +13,7 @@ interface Profesional {
   telefono?: string
   email?: string
   imagen_url?: string
+  foto_url?: string
   activo: boolean
   orden: number
   created_at: string
@@ -89,9 +90,9 @@ export default function Professionals() {
               profesionales.map((profesional) => (
                 <div key={profesional.id} className="bg-white rounded-2xl shadow-lg p-8 text-center hover:shadow-xl transition-shadow duration-300">
                   <div className="w-28 h-28 mx-auto mb-6">
-                    {profesional.imagen_url ? (
+                    {(profesional.foto_url || profesional.imagen_url) ? (
                       <img
-                        src={profesional.imagen_url}
+                        src={profesional.foto_url || profesional.imagen_url}
                         alt={profesional.nombre}
                         className="w-full h-full object-cover rounded-full border-4 border-white shadow"
                         loading="lazy"
