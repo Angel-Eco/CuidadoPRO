@@ -100,7 +100,7 @@ export default function Testimonials() {
 
               {/* Testimonial Text */}
               <blockquote className="text-xl md:text-2xl text-gray-700 text-center leading-relaxed mb-8 italic">
-                "{testimonials[currentTestimonial].text}"
+                &ldquo;{testimonials[currentTestimonial].text}&rdquo;
               </blockquote>
 
               {/* Author Info */}
@@ -182,7 +182,7 @@ export default function Testimonials() {
 
                 {/* Text */}
                 <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">
-                  "{testimonial.text}"
+                  &ldquo;{testimonial.text}&rdquo;
                 </p>
 
                 {/* Author */}

@@ -24,7 +24,7 @@ ENV NEXT_PUBLIC_WHATSAPP_NUMBER=$NEXT_PUBLIC_WHATSAPP_NUMBER
 ENV NEXT_PUBLIC_APP_NAME=$NEXT_PUBLIC_APP_NAME
 
 # Build the application with verbose output
-RUN npm run build
+RUN npm run build:production
 
 # Expose port
 EXPOSE 3000

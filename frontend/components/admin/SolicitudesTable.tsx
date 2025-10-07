@@ -126,10 +126,12 @@ export default function SolicitudesTable() {
     }
   }
 
-  const handleUpdateStatus = async (id: string, nuevoEstado: string, comentariosAdmin?: string) => {
+  const handleUpdateStatus = async (id: string, nuevoEstado: string | null, comentariosAdmin?: string) => {
     try {
       setUpdating(true)
-      const updateData: { estado: string; comentarios_admin?: string } = { estado: nuevoEstado }
+      // Si nuevoEstado es null, usar 'pendiente' como valor por defecto
+      const estado = nuevoEstado || 'pendiente'
+      const updateData: { estado: string; comentarios_admin?: string } = { estado }
       if (comentariosAdmin && comentariosAdmin.trim()) {
         updateData.comentarios_admin = comentariosAdmin.trim()
       }
