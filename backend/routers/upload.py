@@ -59,15 +59,11 @@ async def upload_profesional_foto(
         JSON con la URL pública de la imagen subida
     """
     try:
-        print(f"📁 Archivo recibido: {file.filename}, tipo: {file.content_type}")
-        
         # Validar archivo
         validate_image_file(file)
         
         # Leer contenido del archivo
         content = await file.read()
-        print(f"📊 Tamaño del archivo: {len(content)} bytes")
-        print(f"📊 Tipo de contenido: {type(content)}")
         
         # Verificar que el contenido sea bytes
         if not isinstance(content, bytes):
@@ -86,15 +82,8 @@ async def upload_profesional_foto(
         
         # Generar nombre único
         filename = generate_unique_filename(file.filename)
-        print(f"🏷️ Nombre generado: {filename}")
-        
         # Subir a Supabase Storage
         try:
-            print(f"☁️ Subiendo a Supabase Storage...")
-            print(f"📁 Archivo: {filename}")
-            print(f"📊 Tamaño: {len(content)} bytes")
-            print(f"🎯 Content-Type: {file.content_type}")
-            
             # Intentar subir el archivo
             result = supabase.storage.from_("profesionales-fotos").upload(
                 filename,
@@ -104,8 +93,6 @@ async def upload_profesional_foto(
                     "cache-control": "3600"
                 }
             )
-            
-            print(f"📤 Resultado de subida: {result}")
             
             # Verificar si hay errores en la respuesta
             if hasattr(result, 'error') and result.error:
@@ -336,8 +323,6 @@ async def test_simple_upload(file: UploadFile = File(...)):
                     "content-type": file.content_type or "application/octet-stream"
                 }
             )
-            
-            print(f"📤 Resultado: {result}")
             
             # Limpiar archivo de prueba
             supabase.storage.from_(bucket_name).remove([filename])

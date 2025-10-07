@@ -504,19 +504,13 @@ async def create_profesional(
 ):
     """Create a new profesional."""
     try:
-        print(f"📝 Creando profesional con datos: {profesional.model_dump()}")
-        
         # Validar datos antes de insertar
         data_to_insert = profesional.model_dump()
-        print(f"📊 Datos a insertar: {data_to_insert}")
         
         # Verificar que no haya campos None que puedan causar problemas
         cleaned_data = {k: v for k, v in data_to_insert.items() if v is not None}
-        print(f"🧹 Datos limpiados: {cleaned_data}")
         
         result = supabase.table("profesionales").insert(cleaned_data).execute()
-        
-        print(f"📤 Resultado de inserción: {result}")
         
         if result.data:
             return ProfesionalResponse(**result.data[0])
@@ -784,21 +778,15 @@ async def test_profesional_insert(
         profesional = ProfesionalCreate(**profesional_data)
         data_to_insert = profesional.model_dump()
         
-        print(f"📊 Datos a insertar: {data_to_insert}")
-        
         # Limpiar datos None
         cleaned_data = {k: v for k, v in data_to_insert.items() if v is not None}
-        print(f"🧹 Datos limpiados: {cleaned_data}")
         
         # Intentar insertar
         result = supabase.table("profesionales").insert(cleaned_data).execute()
         
-        print(f"📤 Resultado de inserción: {result}")
-        
         if result.data:
             # Eliminar el registro de prueba
             supabase.table("profesionales").delete().eq("id", result.data[0]["id"]).execute()
-            print(f"🗑️ Registro de prueba eliminado")
             
             return {
                 "success": True,

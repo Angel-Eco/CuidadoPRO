@@ -233,13 +233,10 @@ async def get_profesionales_activos():
         
         result = supabase.table("profesionales").select("*").eq("activo", True).order("orden", desc=False).order("nombre", desc=False).execute()
         
-        print(f"🔍 Datos de profesionales activos: {result.data}")
-        
         if result.data is None:
             return []
         
         profesionales = [ProfesionalResponse(**prof) for prof in result.data]
-        print(f"📤 Profesionales procesados: {[p.model_dump() for p in profesionales]}")
         
         return profesionales
         
