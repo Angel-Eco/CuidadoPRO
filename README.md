@@ -245,7 +245,7 @@ npm run lint
 
 ### Render (Recomendado)
 
-#### Frontend en Render:
+#### Frontend en Render (SIN Docker):
 1. **Crear nuevo Web Service** en Render
 2. **Conectar repositorio** de GitHub
 3. **Configurar build settings**:
@@ -253,8 +253,11 @@ npm run lint
    - **Start Command**: `cd frontend && npm start`
    - **Environment**: `Node`
    - **Node Version**: `18`
-4. **Variables de entorno**:
+   - **Docker**: ❌ **DESACTIVAR** (no usar Docker)
+4. **Variables de entorno** (OBLIGATORIAS):
    ```
+   NODE_ENV=production
+   NEXT_TELEMETRY_DISABLED=1
    NEXT_PUBLIC_API_URL=https://tu-backend-url.onrender.com
    NEXT_PUBLIC_WHATSAPP_NUMBER=+1234567890
    NEXT_PUBLIC_APP_NAME=CuidadoPRO
