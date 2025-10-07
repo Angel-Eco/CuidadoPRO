@@ -245,15 +245,13 @@ npm run lint
 
 ### Render (Recomendado)
 
-#### Frontend en Render (SIN Docker):
+#### Frontend en Render (CON Docker):
 1. **Crear nuevo Web Service** en Render
 2. **Conectar repositorio** de GitHub
 3. **Configurar build settings**:
-   - **Build Command**: `cd frontend && npm ci && npm run build`
-   - **Start Command**: `cd frontend && npm start`
-   - **Environment**: `Node`
-   - **Node Version**: `18`
-   - **Docker**: ❌ **DESACTIVAR** (no usar Docker)
+   - **Dockerfile Path**: `frontend/Dockerfile`
+   - **Docker**: ✅ **ACTIVAR**
+   - **Environment**: `Docker`
 4. **Variables de entorno** (OBLIGATORIAS):
    ```
    NODE_ENV=production
@@ -263,13 +261,14 @@ npm run lint
    NEXT_PUBLIC_APP_NAME=CuidadoPRO
    ```
 
-#### Backend en Render:
+#### Backend en Render (CON Docker):
 1. **Crear nuevo Web Service** en Render
-2. **Configurar build settings**:
-   - **Build Command**: `cd backend && pip install -r requirements.txt`
-   - **Start Command**: `cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT`
-   - **Environment**: `Python 3`
-3. **Variables de entorno**:
+2. **Conectar repositorio** de GitHub
+3. **Configurar build settings**:
+   - **Dockerfile Path**: `backend/Dockerfile`
+   - **Docker**: ✅ **ACTIVAR**
+   - **Environment**: `Docker`
+4. **Variables de entorno**:
    ```
    SUPABASE_URL=tu_url_de_supabase
    SUPABASE_SERVICE_KEY=tu_service_key_de_supabase

@@ -1,46 +1,33 @@
-# Dockerfile optimizado para Next.js en producción
-FROM node:18-alpine AS base
+# Dockerfile simplificado para Render con Docker
+FROM node:18-alpine
 
-# Install dependencies only when needed
-FROM base AS deps
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
-RUN npm ci --include=dev
+# Install dependencies (including dev dependencies for build)
+COPY package.json package-lock.json ./
+RUN npm ci && npm cache clean --force
 
-# Rebuild the source code only when needed
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+# Copy source code
 COPY . .
 
-# Next.js telemetry
-ENV NEXT_TELEMETRY_DISABLED 1
-
-# Variables de entorno que Render inyectará
-ENV NODE_ENV=production
-
-RUN npm run build
-
-# Production image
-FROM base AS runner
-WORKDIR /app
-
+# Set environment variables
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Set build-time environment variables (Render will inject these)
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_WHATSAPP_NUMBER
+ARG NEXT_PUBLIC_APP_NAME
 
-COPY --from=builder /app/public ./public
-RUN mkdir .next && chown nextjs:nodejs .next
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_WHATSAPP_NUMBER=$NEXT_PUBLIC_WHATSAPP_NUMBER
+ENV NEXT_PUBLIC_APP_NAME=$NEXT_PUBLIC_APP_NAME
 
-USER nextjs
+# Build the application with verbose output
+RUN npm run build
+
+# Expose port
 EXPOSE 3000
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "server.js"]
+# Start the application
+CMD ["npm", "start"]
