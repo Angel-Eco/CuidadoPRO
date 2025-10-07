@@ -244,7 +244,37 @@ npm run lint
 ## 🚀 Despliegue
 
 ### Render (Recomendado)
-Ver [RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md) para instrucciones detalladas.
+
+#### Frontend en Render:
+1. **Crear nuevo Web Service** en Render
+2. **Conectar repositorio** de GitHub
+3. **Configurar build settings**:
+   - **Build Command**: `cd frontend && npm ci && npm run build`
+   - **Start Command**: `cd frontend && npm start`
+   - **Environment**: `Node`
+   - **Node Version**: `18`
+4. **Variables de entorno**:
+   ```
+   NEXT_PUBLIC_API_URL=https://tu-backend-url.onrender.com
+   NEXT_PUBLIC_WHATSAPP_NUMBER=+1234567890
+   NEXT_PUBLIC_APP_NAME=CuidadoPRO
+   ```
+
+#### Backend en Render:
+1. **Crear nuevo Web Service** en Render
+2. **Configurar build settings**:
+   - **Build Command**: `cd backend && pip install -r requirements.txt`
+   - **Start Command**: `cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT`
+   - **Environment**: `Python 3`
+3. **Variables de entorno**:
+   ```
+   SUPABASE_URL=tu_url_de_supabase
+   SUPABASE_SERVICE_KEY=tu_service_key_de_supabase
+   JWT_SECRET_KEY=tu_jwt_secret_key_muy_seguro
+   CORS_ORIGINS=https://tu-frontend-url.onrender.com
+   ```
+
+Ver [RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md) para instrucciones más detalladas.
 
 ### Azure
 Ver [deployment/azure-setup.md](./deployment/azure-setup.md) para configuración en Azure.
